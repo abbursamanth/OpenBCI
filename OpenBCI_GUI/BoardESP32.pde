@@ -269,11 +269,6 @@ class BoardESP32 extends Board implements AccelerometerCapableBoard, AnalogCapab
         println("BoardESP32: Markers not supported");
     }
 
-    @Override
-    public Pair<Boolean, String> sendCommand(String command) {
-        return new ImmutablePair<Boolean, String>(false, "Commands not supported for ESP32 board");
-    }
-
     // --- AccelerometerCapableBoard Interface Methods ---
     
     @Override
@@ -371,5 +366,4 @@ class BoardESP32 extends Board implements AccelerometerCapableBoard, AnalogCapab
     public Integer isCheckingImpedanceOnChannel() {
         return null; // Not checking impedance
     }
-}
 }
