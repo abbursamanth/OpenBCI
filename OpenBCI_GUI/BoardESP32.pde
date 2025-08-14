@@ -44,12 +44,15 @@ class BoardESP32 extends BoardBrainFlow implements AccelerometerCapableBoard, An
         
         if (connectionType.equals("Serial")) {
             params.serial_port = serialPort;
+            println("BoardESP32: Setting serial port to: " + serialPort);
         } else if (connectionType.equals("WiFi")) {
             params.ip_address = wifiIP;
             params.ip_port = 6677; // Standard OpenBCI WiFi port
+            println("BoardESP32: Setting WiFi to: " + wifiIP + ":" + 6677);
         } else if (connectionType.equals("Bluetooth")) {
             // For Bluetooth, we might use different parameters
             params.mac_address = bluetoothDevice;
+            println("BoardESP32: Setting Bluetooth to: " + bluetoothDevice);
         }
         
         return params;
@@ -57,8 +60,40 @@ class BoardESP32 extends BoardBrainFlow implements AccelerometerCapableBoard, An
 
     @Override
     public BoardIds getBoardId() {
-        // Use CYTON_BOARD as the base - ESP32 can mimic Cyton format
+        // Use CYTON_BOARD as the base - ESP32 sends data in Cyton format
         return BoardIds.CYTON_BOARD;
+    }
+
+    @Override
+    public boolean initializeInternal() {
+        try {
+            println("BoardESP32: Initializing with " + connectionType + " connection");
+            println("BoardESP32: Connection info: " + 
+                    (connectionType.equals("Serial") ? serialPort : 
+                     connectionType.equals("WiFi") ? wifiIP : bluetoothDevice));
+            
+            // Use the parent class initialization which creates BoardShim with correct parameters
+            boardShim = new BoardShim(getBoardIdInt(), getParams());
+            
+            try {
+                BoardShim.enable_dev_board_logger();
+                BoardShim.set_log_file(directoryManager.getConsoleDataPath() + "ESP32_BrainFlow_" +
+                    directoryManager.getFileNameDateTime() + ".txt");
+            } catch (BrainFlowError e) {
+                println("BoardESP32: Warning - could not set log file: " + e.getMessage());
+            }
+            
+            println("BoardESP32: Preparing session...");
+            boardShim.prepare_session();
+            println("BoardESP32: Session prepared successfully");
+            return true;
+
+        } catch (Exception e) {
+            boardShim = null;
+            outputError("BoardESP32 ERROR: " + e.getMessage() + " when initializing. Check connection and port.");
+            e.printStackTrace();
+            return false;
+        }
     }
 
     @Override
