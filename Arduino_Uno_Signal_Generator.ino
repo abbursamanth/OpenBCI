@@ -1,37 +1,37 @@
 /*
-  Arduino Uno Simple Signal Generator for OpenBCI GUI
+  Arduino Uno OpenBCI Compatible Signal Generator
   
-  This sketch sends readable analog data that can be processed by the GUI.
-  Simplified approach - sends CSV-like data for easier debugging.
+  This sketch sends data in OpenBCI binary format that BrainFlow can understand.
+  Back to the working approach - no CSV, just proper OpenBCI packets.
   
   - Reads from 6 analog pins (A0-A5)
-  - Sends readable data format
-  - Sample rate: 50 Hz (every 20ms) - stable for Arduino
+  - Sends OpenBCI binary packets (33 bytes)
+  - Sample rate: 50 Hz (stable for Arduino)
+  - Compatible with BrainFlow CYTON_BOARD
 */
 
-// Timing for sampling
-const unsigned long SAMPLE_INTERVAL_MS = 20; // 20ms = 50Hz (more realistic for Arduino)
+// OpenBCI packet format constants
+const int PACKET_SIZE = 33;
+const byte START_BYTE = 0xA0;
+const byte END_BYTE = 0xC0;
+
+// Timing for 50Hz sampling
+const unsigned long SAMPLE_INTERVAL_MS = 20; // 20ms = 50Hz
 
 // Arduino Uno analog pins
 const int ANALOG_PINS[6] = {A0, A1, A2, A3, A4, A5};
-const int NUM_CHANNELS = 6;
 
 // Variables
 unsigned long lastSampleTime = 0;
-unsigned int sampleNumber = 0;
+byte sampleNumber = 0;
 
 void setup() {
-  Serial.begin(9600); // Reliable baud rate
+  Serial.begin(115200); // Standard OpenBCI baud rate
   
   // Set analog reference to default (5V)
   analogReference(DEFAULT);
   
-  // Send startup message
-  Serial.println("Arduino Uno Signal Generator Started");
-  Serial.println("Format: Sample,A0,A1,A2,A3,A4,A5");
-  Serial.println("Starting data stream...");
-  
-  delay(2000); // Give time to read messages
+  delay(1000); // Give GUI time to connect
 }
 
 void loop() {
@@ -41,41 +41,62 @@ void loop() {
   if (currentTime - lastSampleTime >= SAMPLE_INTERVAL_MS) {
     lastSampleTime = currentTime;
     
-    // Send readable data
-    sendReadableData();
+    // Send OpenBCI packet
+    sendOpenBCIPacket();
     
     sampleNumber++;
   }
 }
 
-void sendReadableData() {
-  // Send sample number
-  Serial.print(sampleNumber);
-  Serial.print(",");
+void sendOpenBCIPacket() {
+  byte packet[PACKET_SIZE];
+  int index = 0;
   
-  // Read and send all analog channels
-  for (int channel = 0; channel < NUM_CHANNELS; channel++) {
-    int adcValue = analogRead(ANALOG_PINS[channel]);
+  // Start byte
+  packet[index++] = START_BYTE;
+  
+  // Sample number (8-bit counter)
+  packet[index++] = sampleNumber;
+  
+  // 8 EEG channels (3 bytes each, 24-bit)
+  // Use 6 real channels + 2 repeated for OpenBCI format
+  for (int channel = 0; channel < 8; channel++) {
+    int adcValue;
     
-    // Convert to voltage (0-5V range)
-    float voltage = (adcValue * 5.0) / 1023.0;
+    if (channel < 6) {
+      // Real analog channels A0-A5
+      adcValue = analogRead(ANALOG_PINS[channel]);
+    } else {
+      // Repeat A0 and A1 for channels 6 and 7
+      adcValue = analogRead(ANALOG_PINS[channel - 6]);
+    }
     
-    // Add some demo signals for testing
+    // Convert 10-bit ADC (0-1023) to 24-bit signed value
+    // Center around 0 and scale appropriately
+    long scaledValue = (long)(adcValue - 512) * 16384; // Scale to use 24-bit range
+    
+    // Add demo signals for easy identification
     if (channel == 0) {
-      // Channel 0: Add sine wave
-      voltage += sin(millis() * 0.01) * 0.5 + 2.5; // 0-5V range
+      scaledValue += (long)(sin(millis() * 0.01) * 100000);
     } else if (channel == 1) {
-      // Channel 1: Add different frequency
-      voltage += sin(millis() * 0.02) * 0.3 + 2.5;
+      scaledValue += (long)(sin(millis() * 0.02) * 50000);
     }
     
-    // Send voltage value
-    Serial.print(voltage, 3); // 3 decimal places
-    
-    if (channel < NUM_CHANNELS - 1) {
-      Serial.print(",");
-    }
+    // Pack as 3 bytes (24-bit, big-endian)
+    packet[index++] = (scaledValue >> 16) & 0xFF; // MSB
+    packet[index++] = (scaledValue >> 8) & 0xFF;  // Middle
+    packet[index++] = scaledValue & 0xFF;         // LSB
   }
   
-  Serial.println(); // End line
+  // 3 Accelerometer channels (2 bytes each, 16-bit) - dummy data
+  for (int i = 0; i < 3; i++) {
+    packet[index++] = 0x00; // High byte
+    packet[index++] = 0x00; // Low byte
+  }
+  
+  // End byte
+  packet[index++] = END_BYTE;
+  
+  // Send packet over serial
+  Serial.write(packet, PACKET_SIZE);
 }
