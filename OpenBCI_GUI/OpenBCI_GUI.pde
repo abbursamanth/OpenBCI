@@ -645,11 +645,9 @@ void initSystem() {
             println("Cognisync_GUI: Init session using Streaming data source");
             break;
         case DATASOURCE_ESP32:
-            // Get connection info from ESP32Box
-            String esp32Protocol = controlPanel.esp32Box.getSelectedProtocol();
-            String esp32ConnectionInfo = controlPanel.esp32Box.getConnectionInfo();
-            currentBoard = new BoardESP32(esp32ConnectionInfo, esp32Protocol);
-            println("CogniSync_GUI: Init session using ESP32 via " + esp32Protocol + ": " + esp32ConnectionInfo);
+            // Use Cyton board with ESP32 serial port (COM8)
+            currentBoard = new BoardCytonSerial("COM8");
+            println("CogniSync_GUI: Init session using ESP32 on COM8 via Cyton protocol");
             break;
         default:
             break;
