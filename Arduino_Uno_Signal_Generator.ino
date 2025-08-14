@@ -1,12 +1,13 @@
 /*
   Arduino Uno OpenBCI Compatible Signal Generator
   
-  This sketch sends data in OpenBCI binary format that BrainFlow can understand.
-  Back to the working approach - no CSV, just proper OpenBCI packets.
+  This sketch mimics a Cyton board for BrainFlow compatibility.
+  Responds to BrainFlow commands and sends proper data packets.
   
   - Reads from 6 analog pins (A0-A5)
+  - Responds to BrainFlow initialization commands
   - Sends OpenBCI binary packets (33 bytes)
-  - Sample rate: 50 Hz (stable for Arduino)
+  - Sample rate: 250 Hz (standard OpenBCI rate)
   - Compatible with BrainFlow CYTON_BOARD
 */
 
@@ -15,8 +16,8 @@ const int PACKET_SIZE = 33;
 const byte START_BYTE = 0xA0;
 const byte END_BYTE = 0xC0;
 
-// Timing for 50Hz sampling
-const unsigned long SAMPLE_INTERVAL_MS = 20; // 20ms = 50Hz
+// Timing for 250Hz sampling (standard OpenBCI rate)
+const unsigned long SAMPLE_INTERVAL_US = 4000; // 4000 microseconds = 250Hz
 
 // Arduino Uno analog pins
 const int ANALOG_PINS[6] = {A0, A1, A2, A3, A4, A5};
@@ -24,6 +25,8 @@ const int ANALOG_PINS[6] = {A0, A1, A2, A3, A4, A5};
 // Variables
 unsigned long lastSampleTime = 0;
 byte sampleNumber = 0;
+bool streamingData = false;
+String inputCommand = "";
 
 void setup() {
   Serial.begin(115200); // Standard OpenBCI baud rate
@@ -31,20 +34,77 @@ void setup() {
   // Set analog reference to default (5V)
   analogReference(DEFAULT);
   
-  delay(1000); // Give GUI time to connect
+  // Send OpenBCI startup message that BrainFlow expects
+  delay(500);
+  Serial.println("OpenBCI V3 8-Bit Board");
+  Serial.println("On Board ADS1299 Device ID: 0x3E");
+  Serial.println("LIS3DH Device ID: 0x33");
+  Serial.println("$$$");
+  
+  delay(1000);
 }
 
 void loop() {
-  unsigned long currentTime = millis();
+  // Handle incoming commands from BrainFlow
+  handleSerialCommands();
   
-  // Check if it's time for the next sample
-  if (currentTime - lastSampleTime >= SAMPLE_INTERVAL_MS) {
-    lastSampleTime = currentTime;
+  // Send data packets if streaming is enabled
+  if (streamingData) {
+    unsigned long currentTime = micros();
     
-    // Send OpenBCI packet
-    sendOpenBCIPacket();
+    if (currentTime - lastSampleTime >= SAMPLE_INTERVAL_US) {
+      lastSampleTime = currentTime;
+      sendOpenBCIPacket();
+      sampleNumber++;
+    }
+  }
+}
+
+void handleSerialCommands() {
+  while (Serial.available()) {
+    char inChar = (char)Serial.read();
     
-    sampleNumber++;
+    if (inChar == '\n' || inChar == '\r') {
+      processCommand(inputCommand);
+      inputCommand = "";
+    } else {
+      inputCommand += inChar;
+    }
+  }
+}
+
+void processCommand(String command) {
+  command.trim();
+  
+  if (command == "v") {
+    // Version query
+    Serial.println("v3.1.1$$$");
+  }
+  else if (command == "b") {
+    // Start streaming
+    streamingData = true;
+    Serial.println("Stream started$$$");
+  }
+  else if (command == "s") {
+    // Stop streaming
+    streamingData = false;
+    Serial.println("Stream stopped$$$");
+  }
+  else if (command == "?") {
+    // Help/status
+    Serial.println("OpenBCI V3 8-Bit Board$$$");
+  }
+  else if (command.startsWith("x")) {
+    // Channel settings - just acknowledge
+    Serial.println("Success: Channel set$$$");
+  }
+  else if (command == "d") {
+    // Default channel settings
+    Serial.println("Success: default channel settings$$$");
+  }
+  else {
+    // Unknown command - just acknowledge
+    Serial.println("Success$$$");
   }
 }
 

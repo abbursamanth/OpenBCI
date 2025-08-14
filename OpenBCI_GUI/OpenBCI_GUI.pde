@@ -645,13 +645,9 @@ void initSystem() {
             println("Cognisync_GUI: Init session using Streaming data source");
             break;
         case DATASOURCE_ESP32:
-            // Use Cyton board with Arduino serial port - BrainFlow handles the protocol
-            String arduinoPort = controlPanel.esp32Box.getConnectionInfo();
-            if (arduinoPort == null || arduinoPort.equals("") || arduinoPort.equals("N/A")) {
-                arduinoPort = "COM9"; // Default fallback to COM9 (CH340 Arduino)
-            }
-            currentBoard = new BoardCytonSerial(arduinoPort);
-            println("CogniSync_GUI: Init session using Arduino on " + arduinoPort + " via BrainFlow Cyton protocol");
+            // Simple direct connection to Arduino on COM9
+            currentBoard = new BoardCytonSerial("COM9");
+            println("CogniSync_GUI: Init session using Arduino on COM9 - BrainFlow CYTON protocol");
             break;
         default:
             break;
