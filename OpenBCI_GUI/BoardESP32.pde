@@ -265,12 +265,6 @@ class BoardESP32 extends Board implements AccelerometerCapableBoard, AnalogCapab
     }
     
     @Override
-    public int getBoardIdInt() {
-        // Return an integer board ID for compatibility
-        return 999; // Custom ID for ESP32
-    }
-    
-    @Override
     public int getTotalChannelCount() {
         // Total channels including EXG + timestamp + sample index + markers
         return NUM_CHANNELS + 3; // 8 EXG + timestamp + sample index + marker
