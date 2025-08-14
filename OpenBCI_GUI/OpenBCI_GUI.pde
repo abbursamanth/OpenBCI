@@ -648,7 +648,7 @@ void initSystem() {
             // Use Cyton board with dynamically selected Arduino serial port
             String arduinoPort = controlPanel.esp32Box.getConnectionInfo();
             if (arduinoPort == null || arduinoPort.equals("") || arduinoPort.equals("N/A")) {
-                arduinoPort = "COM6"; // Default fallback to COM6
+                arduinoPort = "COM9"; // Default fallback to COM9 (CH340 Arduino)
             }
             currentBoard = new BoardCytonSerial(arduinoPort);
             println("CogniSync_GUI: Init session using Arduino Uno on " + arduinoPort + " via Cyton protocol");
