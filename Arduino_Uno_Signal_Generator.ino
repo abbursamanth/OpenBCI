@@ -135,11 +135,22 @@ void sendOpenBCIPacket() {
     // Center around 0 and scale appropriately
     long scaledValue = (long)(adcValue - 512) * 16384; // Scale to use 24-bit range
     
-    // Add demo signals for easy identification
+    // Add LARGE demo signals for easy identification and testing
     if (channel == 0) {
-      scaledValue += (long)(sin(millis() * 0.01) * 100000);
+      // Channel 0: Large sine wave (1 Hz)
+      scaledValue = (long)(sin(millis() * 0.001) * 2000000);
     } else if (channel == 1) {
-      scaledValue += (long)(sin(millis() * 0.02) * 50000);
+      // Channel 1: Large sine wave (0.5 Hz) 
+      scaledValue = (long)(sin(millis() * 0.0005) * 1500000);
+    } else if (channel == 2) {
+      // Channel 2: Square wave for testing
+      scaledValue = (millis() % 1000 < 500) ? 1000000 : -1000000;
+    } else if (channel == 3) {
+      // Channel 3: Sawtooth wave
+      scaledValue = ((millis() % 2000) - 1000) * 1000;
+    } else {
+      // Other channels: Use real analog + small sine wave
+      scaledValue += (long)(sin(millis() * 0.002 + channel) * 500000);
     }
     
     // Pack as 3 bytes (24-bit, big-endian)
