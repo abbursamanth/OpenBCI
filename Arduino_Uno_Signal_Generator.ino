@@ -26,7 +26,7 @@ unsigned long lastSampleTime = 0;
 byte sampleNumber = 0;
 
 void setup() {
-  Serial.begin(115200); // Same baud rate as Cyton
+  Serial.begin(9600); // Lower, more reliable baud rate for Arduino Uno
   
   // Set analog reference to default (5V)
   analogReference(DEFAULT);

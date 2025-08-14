@@ -645,9 +645,13 @@ void initSystem() {
             println("Cognisync_GUI: Init session using Streaming data source");
             break;
         case DATASOURCE_ESP32:
-            // Use Cyton board with Arduino Uno serial port (COM3 is common for Arduino)
-            currentBoard = new BoardCytonSerial("COM3");
-            println("CogniSync_GUI: Init session using Arduino Uno on COM3 via Cyton protocol");
+            // Use Cyton board with dynamically selected Arduino serial port
+            String arduinoPort = controlPanel.esp32Box.getConnectionInfo();
+            if (arduinoPort == null || arduinoPort.equals("") || arduinoPort.equals("N/A")) {
+                arduinoPort = "COM6"; // Default fallback to COM6
+            }
+            currentBoard = new BoardCytonSerial(arduinoPort);
+            println("CogniSync_GUI: Init session using Arduino Uno on " + arduinoPort + " via Cyton protocol");
             break;
         default:
             break;

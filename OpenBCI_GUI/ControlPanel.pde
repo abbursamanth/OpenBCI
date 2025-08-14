@@ -2768,7 +2768,7 @@ class ESP32Box {
                 
                 String[] portNames = processing.serial.Serial.list();
                 for (String portName : portNames) {
-                    esp32SerialPortList.addItem("ESP32 " + portName, portName, "");
+                    esp32SerialPortList.addItem("Arduino " + portName, portName, "");
                 }
                 
                 if (portNames.length == 0) {
