@@ -374,6 +374,12 @@ class BoardESP32 extends Board implements AccelerometerCapableBoard, AnalogCapab
         return 0; // No accelerometer
     }
 
+    @Override
+    public List<double[]> getDataWithAccel(int maxSamples) {
+        // ESP32 doesn't have accelerometer, so just return regular data
+        return getData(maxSamples);
+    }
+
     // --- AnalogCapableBoard Interface Methods ---
 
     @Override
@@ -401,6 +407,12 @@ class BoardESP32 extends Board implements AccelerometerCapableBoard, AnalogCapab
         return 0; // No separate analog channels
     }
 
+    @Override
+    public List<double[]> getDataWithAnalog(int maxSamples) {
+        // ESP32 doesn't have separate analog channels, so just return regular data
+        return getData(maxSamples);
+    }
+
     // --- DigitalCapableBoard Interface Methods ---
 
     @Override
@@ -426,6 +438,12 @@ class BoardESP32 extends Board implements AccelerometerCapableBoard, AnalogCapab
     @Override
     public int getDigitalSampleRate() {
         return 0; // No digital channels
+    }
+
+    @Override
+    public List<double[]> getDataWithDigital(int maxSamples) {
+        // ESP32 doesn't have digital channels, so just return regular data
+        return getData(maxSamples);
     }
 
     // --- ImpedanceSettingsBoard Interface Methods ---
