@@ -34,14 +34,20 @@ void setup() {
   // Set analog reference to default (5V)
   analogReference(DEFAULT);
   
-  // Send OpenBCI startup message that BrainFlow expects
-  delay(500);
+  // Clear any existing data in serial buffer
+  while (Serial.available()) {
+    Serial.read();
+  }
+  
+  // Send OpenBCI startup messages that BrainFlow expects
+  delay(1000); // Give BrainFlow time to settle
   Serial.println("OpenBCI V3 8-Bit Board");
   Serial.println("On Board ADS1299 Device ID: 0x3E");
   Serial.println("LIS3DH Device ID: 0x33");
   Serial.println("$$$");
+  Serial.flush();
   
-  delay(1000);
+  delay(500); // Additional settling time
 }
 
 void loop() {
@@ -65,9 +71,11 @@ void handleSerialCommands() {
     char inChar = (char)Serial.read();
     
     if (inChar == '\n' || inChar == '\r') {
-      processCommand(inputCommand);
-      inputCommand = "";
-    } else {
+      if (inputCommand.length() > 0) {
+        processCommand(inputCommand);
+        inputCommand = "";
+      }
+    } else if (inChar != '\n' && inChar != '\r') {
       inputCommand += inChar;
     }
   }
@@ -76,36 +84,53 @@ void handleSerialCommands() {
 void processCommand(String command) {
   command.trim();
   
+  // Respond immediately to all commands - BrainFlow is very picky about timing
   if (command == "v") {
-    // Version query
-    Serial.println("v3.1.1$$$");
+    // Version query - critical for initialization
+    Serial.print("v3.1.1");
+    Serial.flush();
   }
   else if (command == "b") {
-    // Start streaming
+    // Start streaming - this is the key command
     streamingData = true;
-    Serial.println("Stream started$$$");
   }
   else if (command == "s") {
     // Stop streaming
     streamingData = false;
-    Serial.println("Stream stopped$$$");
   }
   else if (command == "?") {
     // Help/status
-    Serial.println("OpenBCI V3 8-Bit Board$$$");
+    Serial.print("OpenBCI V3 8-Bit Board");
+    Serial.flush();
   }
   else if (command.startsWith("x")) {
-    // Channel settings - just acknowledge
-    Serial.println("Success: Channel set$$$");
+    // Channel settings - just acknowledge quickly
+    Serial.print("Success: Channel set");
+    Serial.flush();
   }
   else if (command == "d") {
-    // Default channel settings
-    Serial.println("Success: default channel settings$$$");
+    // Default channel settings - very important for initialization
+    Serial.print("Success: default channel settings");
+    Serial.flush();
+  }
+  else if (command == "c") {
+    // Channel count query
+    Serial.print("daisy removed");
+    Serial.flush();
+  }
+  else if (command == "C") {
+    // Daisy attach
+    Serial.print("no daisy to attach");
+    Serial.flush();
   }
   else {
-    // Unknown command - just acknowledge
-    Serial.println("Success$$$");
+    // Any other command - acknowledge quickly
+    Serial.print("Success");
+    Serial.flush();
   }
+  
+  // Small delay to ensure response is sent
+  delay(10);
 }
 
 void sendOpenBCIPacket() {
