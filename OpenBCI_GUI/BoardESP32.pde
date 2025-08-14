@@ -14,7 +14,7 @@ class BoardESP32 extends Board implements AccelerometerCapableBoard, AnalogCapab
     private int[] emptyArray = new int[0]; // Empty array for unsupported features
     
     // Serial communication
-    private Serial serial_ESP32;
+    private processing.serial.Serial serial_ESP32;
     private boolean isStreaming = false;
     private byte[] packetBuffer = new byte[33]; // OpenBCI packet size
     private int bufferIndex = 0;
@@ -82,7 +82,7 @@ class BoardESP32 extends Board implements AccelerometerCapableBoard, AnalogCapab
             
             if (connectionType.equals("Serial")) {
                 println("BoardESP32: Connecting to serial port: " + serialPort);
-                serial_ESP32 = new Serial(ourApplet, serialPort, 115200);
+                serial_ESP32 = new processing.serial.Serial(ourApplet, serialPort, 115200);
                 serial_ESP32.clear();
                 println("BoardESP32: Serial connection established");
             } else {
