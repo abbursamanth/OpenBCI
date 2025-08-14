@@ -6,11 +6,11 @@
   
   - Reads from 6 analog pins (A0-A5)
   - Sends readable data format
-  - Sample rate: ~125 Hz (every 8ms)
+  - Sample rate: 50 Hz (every 20ms) - stable for Arduino
 */
 
 // Timing for sampling
-const unsigned long SAMPLE_INTERVAL_MS = 8; // 8ms = ~125Hz (more realistic for serial)
+const unsigned long SAMPLE_INTERVAL_MS = 20; // 20ms = 50Hz (more realistic for Arduino)
 
 // Arduino Uno analog pins
 const int ANALOG_PINS[6] = {A0, A1, A2, A3, A4, A5};
