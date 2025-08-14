@@ -27,6 +27,7 @@ class BoardESP32 extends Board implements AccelerometerCapableBoard, AnalogCapab
     private int bufferSize = SAMPLE_RATE; // 1 second of data
     private int writeIndex = 0;
     private long lastSampleTime = 0;
+    private int currentSampleNumber = 0; // Track sample number from packets
     
     // Channel configuration
     private boolean[] channelActive = new boolean[NUM_CHANNELS];
@@ -175,7 +176,7 @@ class BoardESP32 extends Board implements AccelerometerCapableBoard, AnalogCapab
     
     private void parsePacket() {
         // Extract sample number
-        int sampleNumber = packetBuffer[1] & 0xFF;
+        currentSampleNumber = packetBuffer[1] & 0xFF;
         
         // Extract 8 channels of 24-bit data
         for (int ch = 0; ch < NUM_CHANNELS; ch++) {
@@ -204,14 +205,37 @@ class BoardESP32 extends Board implements AccelerometerCapableBoard, AnalogCapab
     
     @Override
     protected double[][] getNewDataInternal() {
-        // Return recent data samples
+        // Return recent data samples in the expected format
         int samplesToReturn = min(10, bufferSize); // Return up to 10 samples
-        double[][] result = new double[NUM_CHANNELS][samplesToReturn];
+        int totalChannels = getTotalChannelCount();
+        double[][] result = new double[totalChannels][samplesToReturn];
         
+        // Fill EXG channels
         for (int ch = 0; ch < NUM_CHANNELS; ch++) {
             for (int i = 0; i < samplesToReturn; i++) {
                 int index = (writeIndex - samplesToReturn + i + bufferSize) % bufferSize;
                 result[ch][i] = dataBuffer[ch][index];
+            }
+        }
+        
+        // Fill timestamp channel (if exists)
+        if (getTimestampChannel() >= 0) {
+            for (int i = 0; i < samplesToReturn; i++) {
+                result[getTimestampChannel()][i] = millis() - (samplesToReturn - i) * 4; // 4ms per sample
+            }
+        }
+        
+        // Fill sample index channel (if exists)
+        if (getSampleIndexChannel() >= 0) {
+            for (int i = 0; i < samplesToReturn; i++) {
+                result[getSampleIndexChannel()][i] = (currentSampleNumber - samplesToReturn + i) & 0xFF;
+            }
+        }
+        
+        // Fill marker channel (if exists) - always 0 for ESP32
+        if (getMarkerChannel() >= 0) {
+            for (int i = 0; i < samplesToReturn; i++) {
+                result[getMarkerChannel()][i] = 0.0;
             }
         }
         
@@ -230,6 +254,60 @@ class BoardESP32 extends Board implements AccelerometerCapableBoard, AnalogCapab
             channels[i] = i;
         }
         return channels;
+    }
+    
+    @Override
+    public int getSampleIndexChannel() {
+        // Return a channel index for sample tracking, or -1 if not available
+        return -1; // ESP32 doesn't have a dedicated sample index channel
+    }
+    
+    @Override
+    public int getTimestampChannel() {
+        // Return a channel index for timestamps, or -1 if not available
+        return -1; // ESP32 doesn't have a dedicated timestamp channel
+    }
+    
+    @Override
+    public int getBoardIdInt() {
+        // Return an integer board ID for compatibility
+        return 999; // Custom ID for ESP32
+    }
+    
+    @Override
+    public int getTotalChannelCount() {
+        // Total channels including EXG + timestamp + sample index + markers
+        return NUM_CHANNELS + 3; // 8 EXG + timestamp + sample index + marker
+    }
+    
+    @Override
+    public int getMarkerChannel() {
+        // Return channel index for markers, or -1 if not available
+        return -1; // ESP32 doesn't support markers
+    }
+    
+    @Override
+    public boolean isConnected() {
+        return (serial_ESP32 != null);
+    }
+    
+    @Override
+    public boolean isStreaming() {
+        return isStreaming;
+    }
+    
+    @Override
+    protected void updateInternal() {
+        // Custom update logic is handled in update() method
+    }
+    
+    @Override
+    protected PacketLossTracker setupPacketLossTracker() {
+        // Set up basic packet loss tracking for ESP32
+        final int minSampleIndex = 0;
+        final int maxSampleIndex = 255;
+        return new PacketLossTracker(getSampleIndexChannel(), getTimestampChannel(),
+                                    minSampleIndex, maxSampleIndex);
     }
     
     @Override
