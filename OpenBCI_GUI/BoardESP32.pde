@@ -121,25 +121,21 @@ class BoardESP32 extends Board implements AccelerometerCapableBoard, AnalogCapab
     }
     
     @Override
-    public boolean startStreaming() {
+    public void startStreaming() {
         try {
             if (serial_ESP32 != null) {
                 isStreaming = true;
                 println("BoardESP32: Started streaming");
-                return true;
             }
-            return false;
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         }
     }
     
     @Override
-    public boolean stopStreaming() {
+    public void stopStreaming() {
         isStreaming = false;
         println("BoardESP32: Stopped streaming");
-        return true;
     }
     
     @Override
