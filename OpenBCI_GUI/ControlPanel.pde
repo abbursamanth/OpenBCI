@@ -407,7 +407,7 @@ class DataSourceBox {
         sourceList.addItem("PLAYBACK (from file)", DATASOURCE_PLAYBACKFILE);
         sourceList.addItem("SYNTHETIC (algorithmic)", DATASOURCE_SYNTHETIC);
         sourceList.addItem("STREAMING (from external)", DATASOURCE_STREAMING);
-        sourceList.addItem("ESP32 (live)", DATASOURCE_ESP32); // Add this line
+        sourceList.addItem("Arduino (live)", DATASOURCE_ESP32); // Using ESP32 constant for Arduino
         sourceList.scrollerLength = 10;
         sourceList.addCallback(new CallbackListener() {
             public void controlEvent(CallbackEvent theEvent) {
