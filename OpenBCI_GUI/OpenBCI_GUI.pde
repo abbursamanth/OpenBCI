@@ -3,14 +3,7 @@
 //
 //   GUI for Cognisync GUI project
 //
-//   Created: Chip Audette, Oct 2013 - May 2014
-//   Modified: Conor Russomanno & Joel Murphy, August 2014 - Dec 2014
-//   Modified (v2.0): Conor Russomanno & Joel Murphy (AJ Keller helped too), June 2016
-//   Modified (v3.0) AJ Keller (Conor Russomanno & Joel Murphy & Wangshu), September 2017
-//   Modified (v4.0) AJ Keller (Richard Waltman), September 2018
-//   Modified (v5.0) Richard Waltman, August 2020
-//
-//   Modified (v1.0) Santosh, August 2025
+//   Created (v1.0) Santosh, August 2025
 //
 //   Requires gwoptics graphing library for processing.  Built on V0.5.0
 //   http://www.gwoptics.org/processing/gwoptics_p5lib/
